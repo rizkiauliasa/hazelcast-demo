@@ -1,0 +1,8 @@
+hazelcast-client:
+  cluster-name: dev
+  network:
+    smart-routing: true
+    redo-operation: true
+    addresses:
+      - hazelcast-member1:5701
+      - hazelcast-member2:5701

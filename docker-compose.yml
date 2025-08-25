@@ -1,0 +1,77 @@
+version: '1.0'
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres-hazelcast
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: mydb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-hazelcast:/var/lib/postgresql/data
+
+  hazelcast-member1:
+    image: hazelcast/hazelcast:5.5
+    container_name: hazelcast-member1
+    environment:
+      JAVA_OPTS: "-Dhazelcast.config=/opt/hazelcast/hazelcast.xml"
+    volumes:
+      - ./src/main/resources/hazelcast.xml:/opt/hazelcast/hazelcast.xml
+    ports:
+      - "5701:5701"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "127.0.0.1", "5701" ]
+      interval: 5s
+      retries: 5
+
+  hazelcast-member2:
+    image: hazelcast/hazelcast:5.5
+    container_name: hazelcast-member2
+    environment:
+      JAVA_OPTS: "-Dhazelcast.config=/opt/hazelcast/hazelcast.xml"
+    volumes:
+      - ./src/main/resources/hazelcast.xml:/opt/hazelcast/hazelcast.xml
+    ports:
+      - "5702:5701"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "127.0.0.1", "5701" ]
+      interval: 5s
+      retries: 5
+
+  management-center:
+    image: hazelcast/management-center:5.5
+    container_name: hazelcast-mc
+    ports:
+      - "8443:8080"
+    environment:
+      - MC_DEFAULT_CLUSTER=dev
+      - MC_DEFAULT_CLUSTER_MEMBERS=hazelcast-member1:5701,hazelcast-member2:5701
+    depends_on:
+      - hazelcast-member1
+      - hazelcast-member2
+
+  spring-app:
+    build: .
+    container_name: spring-hazelcast-app
+    depends_on:
+      - postgres
+      - hazelcast-member1
+      - hazelcast-member2
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-hazelcast:5432/mydb
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: mypass
+      HAZELCAST_CLUSTER_NAME: dev
+    ports:
+      - "9990:9990"
+    networks:
+      - default
+
+volumes:
+  pgdata-hazelcast:
+
+networks:
+  default:
+    driver: bridge
