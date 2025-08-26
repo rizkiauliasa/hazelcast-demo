@@ -1,8 +1,10 @@
 package com.cache.hazelcastDemo.services.impl;
 
 
+import com.cache.hazelcastDemo.entities.Author;
 import com.cache.hazelcastDemo.entities.Book;
 import com.cache.hazelcastDemo.repositories.BookRepository;
+import com.cache.hazelcastDemo.services.AuthorService;
 import com.cache.hazelcastDemo.services.BookService;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -12,16 +14,20 @@ import java.util.List;
 
 @Service
 public class BookServiceImpl implements BookService {
+    private final AuthorService authorService;
     private final BookRepository bookRepository;
     private final IMap<Long, Book> booksCache;
 
-    public BookServiceImpl(BookRepository bookRepository, HazelcastInstance hazelcastInstance) {
+    public BookServiceImpl(AuthorService authorService, BookRepository bookRepository, HazelcastInstance hazelcastInstance) {
+        this.authorService = authorService;
         this.bookRepository = bookRepository;
         this.booksCache = hazelcastInstance.getMap("books");
     }
 
     @Override
     public Book save(Book book) {
+        Author author = authorService.findById(book.getAuthor().getId());
+        book.setAuthor(author);
         Book saved = bookRepository.save(book);
         if (booksCache!=null) booksCache.put(saved.getId(), saved);
         return saved;
