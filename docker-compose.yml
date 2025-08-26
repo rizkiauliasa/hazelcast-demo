@@ -12,6 +12,17 @@ services:
     volumes:
       - pgdata-hazelcast:/var/lib/postgresql/data
 
+  pgadmin-hazelcast:
+    image: dpage/pgadmin4
+    container_name: pgadmin-hazelcast
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8889:80"
+    depends_on:
+      - postgres
+
   hazelcast-member1:
     image: hazelcast/hazelcast:5.5
     container_name: hazelcast-member1
