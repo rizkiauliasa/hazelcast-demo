@@ -8,6 +8,7 @@ This project demonstrates how to integrate Hazelcast as a distributed caching so
 ## 📌 Features
 - Spring Boot **3.5.4** (Java 21)
 - Hazelcast **member cluster** (2 nodes) with client configuration
+- Hazelcast **Near Cache (BINARY format)** enabled for faster client-side reads
 - Hazelcast **Management Center** for cluster monitoring
 - PostgreSQL database integration
 - Spring Data JPA for persistence
@@ -19,11 +20,11 @@ This project demonstrates how to integrate Hazelcast as a distributed caching so
 ## 📂 Project Structure
 ```bash
 hazelcast-demo/
-│── src/main/java/...          # Spring Boot source code
+│── src/main/java/com/cache/hazelcastDemo/...          # Spring Boot source code
+│    ├── configs/HazelcastConfig.java                  # Hazelcast client config (with Near Cache)
 │── src/main/resources/
 │    ├── application.properties
 │    ├── hazelcast.xml         # Hazelcast member config
-│    ├── hazelcast-client.yml  # Hazelcast client config
 │── Dockerfile                 # Spring Boot container
 │── docker-compose.yml         # Multi-service setup
 │── pom.xml                    # Maven dependencies
@@ -81,6 +82,7 @@ flowchart LR
 
     subgraph APP[Spring Boot App]
         S[hazelcast-demo]
+        NC[(Near Cache - BINARY)]
     end
 
     subgraph MC[Management Center]
@@ -88,8 +90,9 @@ flowchart LR
     end
 
     P <--> S
-    S <--> H1
-    S <--> H2
+    S <--> NC
+    NC <--> H1
+    NC <--> H2
     H1 <--> H2
     M <--> H1
     M <--> H2
